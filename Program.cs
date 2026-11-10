@@ -1,4 +1,4 @@
-using Serilog;
+/*using Serilog;
 using Elastic.Serilog.Sinks;
 using Elastic.Ingest.Elasticsearch;
 using Elastic.Ingest.Elasticsearch.DataStreams;
@@ -9,12 +9,18 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .WriteTo.File(".logs/start-host-log-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
+*/
+using OpenTelemetry.Resources;
+using OpenTelemetry.Logs;
+using OpenTelemetry;
+var builder = WebApplication.CreateBuilder(args);
 
-try
-{
-    var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddOpenTelemetry()
+.ConfigureResource(r => r.AddService("TelemetryLogging"))
+.WithLogging()
+.UseOtlpExporter();
 
-    builder.Host.UseSerilog();
+    /*builder.Host.UseSerilog();
 
     builder.Services.AddSerilog((_, lc) => lc.Enrich.FromLogContext()
     .WriteTo.Elasticsearch([new Uri("http://localhost:9200")], opts =>
@@ -36,33 +42,34 @@ try
     })
     .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
     .ReadFrom.Configuration(builder.Configuration));
+    app.UseSerilogRequestLogging();
+    */
 
-    // Add services to the container.
-    builder.Services.AddRazorPages();
 
-    var app = builder.Build();
+builder.Services.AddRazorPages();
+
+var app = builder.Build();
 
     // Configure the HTTP request pipeline.
-    if (!app.Environment.IsDevelopment())
-    {
-        app.UseExceptionHandler("/Error");
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        app.UseHsts();
-    }
-
-    app.UseHttpsRedirection();
-    app.UseStaticFiles();
-
-    app.UseSerilogRequestLogging();
-
-    app.UseRouting();
-
-    app.UseAuthorization();
-
-    app.MapRazorPages();
-
-    app.Run();
+if (!app.Environment.IsDevelopment())
+{
+app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
 }
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapRazorPages();
+
+app.Run();
+
+/*
 catch (Exception ex)
 {
     Log.Fatal(ex, "Хост аварийно завершил работу при старте");
@@ -70,4 +77,4 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
-}
+}*/
